@@ -26,56 +26,31 @@ struct sym_list Head;	/* head of singly-linked list */
  * Programming: Networking APIs: Sockets and XTI," p. 101
  *
  */
-
-int main( int argc, char argv, *env[] ) {
-    int server_fd;
-    connection_fd;
-    void service()
-    create_service();
-    save();
-    restore();
+int main( int argc, char *argv[], char *env[] ) {
+    int server_fd, connection_fd, create_service();
+    void service(), save(), restore();
     socklen_t len;
     struct sockaddr_in cliaddr;
     char buf[BUFSIZE];
     extern int close();
     server_fd = create_service();
-
-    while( HELL_NOT_FROZEN ){
-        len = sizeof( cliaddr );
-        connection_fd = accept( server_fd, (SA *) &cliaddr, &len );
-        if( connection_fd < 0 ){
-	       perror( "accept on server_fd" );
-	       exit( ERR_ACCEPT );
-	    }
-        restore( DATABASE );
-        service(connection_fd);
-        save( DATABASE );
-        close( connection_fd );
-    }
+    restore( DATABASE );
+    service(server_fd,len,cliaddr);
+    save( DATABASE );
+    close( server_fd );
 }
 
-void service( int fd ) {
-    FILE *client_request, *client_reply, *fdopen();
+void service( int fd,socklen_t len, struct sockaddr_in cliaddr) {
     char buf[BUFSIZE];
-    extern  void fix_tcl(), insert();
+    extern  void fix_tcl(), insert(),save();
 
     /* interface between socket and stdio */
-    client_request = fdopen( fd, "r" );
-    if( client_request == (FILE *) NULL ) {
-        perror( "fdopen of client_request" );
-        exit( 1 );
-    }
+    len = sizeof(cliaddr);
 
-    client_reply = fdopen( fd, "w" );
-    if( client_reply == (FILE *) NULL ) {
-        perror( "fdopen of client_reply" );
-        exit( 1 );
-    }
-
-    while( fgets( buf, BUFSIZE, client_request ) != NULL ){
+    while(recvfrom(fd, buf, BUFSIZE, 0, (struct sockaddr*)&cliaddr, &len) > 0 ){
         char *ptr, *name, *value;
         fix_tcl( buf ); /* hack to interface with tcl scripting language */
-
+        
         /* ASSIGN */
         if( (ptr = find_equals( buf )) != (char *) NULL ) {
             
@@ -88,8 +63,8 @@ void service( int fd ) {
             name = strsave( buf ); 
             value = strsave( ++ptr );
             insert( name, value );
-            fputs( "\n", client_reply );
-            fflush( client_reply );
+            save( DATABASE );
+            sendto(fd, "\n", BUFSIZE, 0, (struct sockaddr*)&cliaddr, len);
 
             #ifdef EBUG
                 fprintf( stderr, "REPLY: <>\n" );
@@ -106,16 +81,14 @@ void service( int fd ) {
             if( (find_newline = strrchr( ptr, NEWLINE )) != NULL ) *find_newline = EOS;
 
             if( (reply = lookup( ++ptr )) != NULL ) {
-                fputs( reply, client_reply );
-                fflush( client_reply );
+                sendto(fd, reply, BUFSIZE, 0, (struct sockaddr*)&cliaddr, len);
                 #ifdef EBUG
                     fprintf( stderr, "REPLY: <%s>\n", reply );
                 #endif
             }
 
             else {
-                fputs( "\n", client_reply );
-                fflush( client_reply );
+                sendto(fd, "\n", BUFSIZE, 0, (struct sockaddr*)&cliaddr, len);
                 #ifdef EBUG
                     fprintf( stderr, "REPLY: <>\n" );
                 #endif
@@ -134,7 +107,7 @@ void service( int fd ) {
 int create_service() {
     int listenfd;
     struct sockaddr_in servaddr;
-    listenfd = socket(AF_INET, SOCK_STREAM, 0 );
+    listenfd = socket(AF_INET, SOCK_DGRAM, 0 );
     if( listenfd < 0 ) {
         perror( "creating socket for listenfd" );
         exit( ERR_SOCKET );
@@ -148,12 +121,6 @@ int create_service() {
         perror( "bind on listenfd");
         exit( ERR_BIND );
     }
-
-    if( listen( listenfd, LISTENQ ) < 0 ) {
-        perror( "listen on listenfd" );
-        exit( ERR_LISTEN );
-    }
-    
     return listenfd;
 }
 

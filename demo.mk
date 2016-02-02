@@ -3,7 +3,7 @@
 #
 CC = gcc
 #add -DEBUG to CFLAGS to get lots of debugging!
-CFLAGS = -g 
+CFLAGS = -g
 CFILES = client_demo.c server_demo.c util.c
 OFILES = server_demo.o util.o
 HFILES = demo.h defs.h symlist.h symbol.h
@@ -11,7 +11,8 @@ LIBES =
 #LIBES =
 
 server_demo: $(OFILES)
-	$(CC) -o server_demo $(CFLAGS) $(OFILES) $(LIBES)
+	#$(CC) -o server_demo $(CFLAGS) $(OFILES) $(LIBES)
+	gcc -o server_demo server_demo.c util.c
 
 server_demo.o: server_demo.c $(HFILES)
 	$(CC) $(CFLAGS) -c server_demo.c
@@ -33,4 +34,3 @@ print:
 
 clean:
 	rm -f *.o *~
-

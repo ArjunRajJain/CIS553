@@ -14,7 +14,7 @@
 
 #define SA struct sockaddr
 
-#define DATABASE "file"
+#define DATABASE "database"
 #define CIS553_PORT 10553
 #define LISTENQ 5
 

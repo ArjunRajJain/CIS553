@@ -1,0 +1,15 @@
+Script started on Tue Feb  2 16:01:33 2016
+[?1034hbash-3.2$ ./client_demo 127.0.0.1
+>$a
+hello
+>% arjun=jain
+>$arjun
+jain
+>$b
+5
+>^Dbash-3.2$ quit
+bash: quit: command not found
+bash-3.2$ exit
+exit
+
+Script done on Tue Feb  2 16:02:01 2016

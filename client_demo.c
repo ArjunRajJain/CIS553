@@ -1,4 +1,3 @@
-
 /*
  * demo client
  * It provides an associative memory for strings
@@ -26,7 +25,6 @@ int main( int argc, char *argv[] ) {
   char buf[BUFSIZE];
   int sockfd;
   struct sockaddr_in servaddr;
-  FILE *server_request, *server_reply;
   extern int close();
 
   /* Check if invoked correctly */
@@ -58,32 +56,20 @@ int main( int argc, char *argv[] ) {
       exit( 100 );
   }
 
-  /* setup the interfaces between the new socket and stdio system */
-  server_request = fdopen( sockfd, "w" );
-  if( server_request == (FILE *) NULL ) {
-      perror( "fdopen of stream for server requests" );
-      exit( 2 );
-  }
-  server_reply = fdopen( sockfd, "r" );
-  if( server_reply == (FILE *) NULL ) {
-      perror( "fdopen of stream for server replies" );
-      exit( 3 );
-  }
-
   /* The main interactive loop, getting input from the user and 
    * passing to the server, and presenting replies from the server to
    * the user, as appropriate. Lots of opportunity to generalize
    * this primitive user interface...
    */
   for( putchar('>'); (fgets( buf, BUFSIZE, stdin ) != NULL ); putchar('>')) {
-      if( fputs( buf, server_request ) == EOF ) {
+
+      if( send(sockfd, buf, BUFSIZE, 0) < 0) {
 	       perror( "write failure to associative memory at server" );
 	    }
-      fflush( server_request );  /* buffering everywhere.... */
 
       /* user wants value */
       if( (find_equals( buf ) == NULL) && (find_dollar( buf ) != NULL) ) {
-	       if( fgets( buf, BUFSIZE, server_reply ) == NULL ) {
+	       if(recv(sockfd, buf, BUFSIZE, 0) < 0) {
 	         perror( "read failure from associative memory at server");
 	       }
 	       fputs( buf, stdout );
@@ -91,15 +77,13 @@ int main( int argc, char *argv[] ) {
 
       /* user sets value */
       if( (find_equals( buf ) != NULL) && (find_dollar( buf ) == NULL) ) {
-	       if( fgets( buf, BUFSIZE, server_reply ) == NULL ) {
+	       if(recv(sockfd, buf, BUFSIZE, 0) < 0) {
 	         perror( "read failure from associative memory at server");
 	       }
 	    }
   }
 
   /* shut things down */
-  fclose( server_request );
-  fclose( server_reply );
   close( sockfd); 
 
   exit( 0 );

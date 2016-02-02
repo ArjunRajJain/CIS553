@@ -1,0 +1,13 @@
+Script started on Tue Feb  2 16:01:13 2016
+[?1034hbash-3.2$ make
+make -f demo.mk server_demo
+gcc -g  -c server_demo.c
+gcc -o server_demo -g  server_demo.o util.o 
+make -f demo.mk client_demo
+gcc -g   client_demo.c -o client_demo
+bash-3.2$ ./server_demo 127.0.0.1
+^C
+bash-3.2$ exit
+exit
+
+Script done on Tue Feb  2 16:02:05 2016
